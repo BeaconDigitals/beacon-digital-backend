@@ -79,14 +79,12 @@ app.get('/admin-data', async (req, res) => {
   }
 });
 
-app.get('/test', (req, res) => {
-  res.json({ message: 'API is working!' });
-});
-
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
-
+app.get('/test', (req, res) => {
+  res.json({ message: 'API is working!' });
+});
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
