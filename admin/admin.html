@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel - Beacon Digital</title>
+  <meta name="description" content="Admin panel for Beacon Digital to manage contact form submissions and newsletter signups.">
+  <meta charset="UTF-8">
+  <title>Beacon Digital Admin Panel</title>
   <style>
     body {
       margin: 0;
@@ -64,40 +65,86 @@
         font-size: 0.8rem;
       }
     }
+    #content {
+      display: none;
+    }
   </style>
-</head>
+</head> 
 <body>
   <header>
     <h1>Beacon Digital Admin Panel</h1>
   </header>
 
-  <div class="login">
+  <div class="login" id="loginDiv">
     <input type="password" id="password" placeholder="Enter Admin Password">
-    <button onclick="fetchData()">Login</button>
+    <button onclick="request2FA()">Login</button>
+    <div id="loginError" style="color:red;margin-top:10px;"></div>
+  </div>
+
+  <div class="login" id="codeDiv" style="display:none;">
+    <input type="text" id="code" placeholder="Enter 2FA Code">
+    <button onclick="verify2FA()">Verify</button>
+    <div id="codeError" style="color:red;margin-top:10px;"></div>
   </div>
 
   <div class="data" id="content"></div>
 
   <script>
-    async function fetchData() {
-      const password = document.getElementById('password').value;
-      const res = await fetch(`/admin-data?password=${encodeURIComponent(password)}`);
-      if (res.status !== 200) return alert('Wrong password!');
-      const data = await res.json();
+    let adminPassword = '';
 
-      let html = '<h2 style="color:red;">Messages</h2><table><tr><th>Name</th><th>Email</th><th>Message</th><th>Page</th><th>Date</th></tr>';
-      data.messages.forEach(m => {
-        html += `<tr><td>${m.name}</td><td>${m.email}</td><td>${m.message}</td><td>${m.page}</td><td>${new Date(m.createdAt).toLocaleString()}</td></tr>`;
+    async function request2FA() {
+      adminPassword = document.getElementById('password').value;
+      const res = await fetch('/admin-2fa-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: adminPassword })
       });
+      const data = await res.json();
+      if (!data.success) {
+        document.getElementById('loginError').textContent = data.error || 'Login failed';
+        return;
+      }
+      document.getElementById('loginError').textContent = '';
+      document.getElementById('loginDiv').style.display = 'none';
+      document.getElementById('codeDiv').style.display = 'block';
+    }
+
+    async function verify2FA() {
+      const code = document.getElementById('code').value;
+      const res = await fetch('/admin-2fa-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        document.getElementById('codeError').textContent = data.error || 'Verification failed';
+        return;
+      }
+      document.getElementById('codeError').textContent = '';
+      document.getElementById('codeDiv').style.display = 'none';
+      showAdminData(data);
+    }
+
+    function showAdminData(data) {
+      let html = '<h2 style="color:red;">Messages</h2><table><tr><th>Name</th><th>Email</th><th>Message</th><th>Page</th><th>Date</th></tr>';
+      if (Array.isArray(data.messages)) {
+        data.messages.forEach(m => {
+          html += `<tr><td>${m.name}</td><td>${m.email}</td><td>${m.message}</td><td>${m.page}</td><td>${new Date(m.createdAt).toLocaleString()}</td></tr>`;
+        });
+      }
       html += '</table>';
 
       html += '<h2 style="color:red;margin-top:40px;">Newsletter Subscribers</h2><table><tr><th>Email</th><th>Date</th></tr>';
-      data.newsletters.forEach(n => {
-        html += `<tr><td>${n.email}</td><td>${new Date(n.createdAt).toLocaleString()}</td></tr>`;
-      });
+      if (Array.isArray(data.newsletters)) {
+        data.newsletters.forEach(n => {
+          html += `<tr><td>${n.email}</td><td>${new Date(n.createdAt).toLocaleString()}</td></tr>`;
+        });
+      }
       html += '</table>';
 
       document.getElementById('content').innerHTML = html;
+      document.getElementById('content').style.display = 'block';
     }
   </script>
 </body>
