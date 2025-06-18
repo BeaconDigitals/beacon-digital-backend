@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - Beacon Digital</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #0a0a0a;
+      color: #fff;
+      padding: 20px;
+    }
+    header {
+      background-color: #111;
+      padding: 10px 20px;
+      border-bottom: 2px solid red;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      color: #f00;
+      font-weight: bold;
+    }
+    .login, .data {
+      margin-top: 30px;
+      text-align: center;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      border-radius: 5px;
+      border: 1px solid #555;
+      background-color: #111;
+      color: #fff;
+      font-size: 1rem;
+    }
+    button {
+      background-color: red;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #c00;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 0.9rem;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #333;
+      text-align: left;
+    }
+    th {
+      background-color: #111;
+      color: red;
+    }
+    @media (max-width: 600px) {
+      table, th, td {
+        font-size: 0.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Beacon Digital Admin Panel</h1>
+  </header>
+
+  <div class="login">
+    <input type="password" id="password" placeholder="Enter Admin Password">
+    <button onclick="fetchData()">Login</button>
+  </div>
+
+  <div class="data" id="content"></div>
+
+  <script>
+    async function fetchData() {
+      const password = document.getElementById('password').value;
+      const res = await fetch(`/admin-data?password=${encodeURIComponent(password)}`);
+      if (res.status !== 200) return alert('Wrong password!');
+      const data = await res.json();
+
+      let html = '<h2 style="color:red;">Messages</h2><table><tr><th>Name</th><th>Email</th><th>Message</th><th>Page</th><th>Date</th></tr>';
+      data.messages.forEach(m => {
+        html += `<tr><td>${m.name}</td><td>${m.email}</td><td>${m.message}</td><td>${m.page}</td><td>${new Date(m.createdAt).toLocaleString()}</td></tr>`;
+      });
+      html += '</table>';
+
+      html += '<h2 style="color:red;margin-top:40px;">Newsletter Subscribers</h2><table><tr><th>Email</th><th>Date</th></tr>';
+      data.newsletters.forEach(n => {
+        html += `<tr><td>${n.email}</td><td>${new Date(n.createdAt).toLocaleString()}</td></tr>`;
+      });
+      html += '</table>';
+
+      document.getElementById('content').innerHTML = html;
+    }
+  </script>
+</body>
+</html>
